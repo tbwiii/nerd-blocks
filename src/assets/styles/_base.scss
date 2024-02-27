@@ -2,16 +2,15 @@
   // Pallette
   --black: #242424;
 
-  --red: #F02D3A;
+  --red: #f02d3a;
   --orange: #ff510b;
   --yellow: #ffca09;
   --green: #09f04a;
   --teal: #12ffd1;
-  --blue: #0cbcff;
+  --blue: #0c85f5;
   --indigo: #540fff;
   --purple: #cb0eff;
   --pink: #ff0ebc;
-
 
   --background: var(--black);
 
@@ -42,15 +41,12 @@
 body {
   margin: 0;
   display: flex;
-  flex-direction: column;
   place-items: center;
-  height: 100vh;
+  min-height: 100vh;
 }
 
 #app {
-  display: flex;
-  place-items: center;
-  height: 100%;
+  display: contents;
 }
 /* 
 @media (prefers-color-scheme: light) {

@@ -1,0 +1,9 @@
+#O {
+  --color: var(--piece-o);
+
+  .block {
+    &::after {
+      display: none;
+    }
+  }
+}
