@@ -1,9 +1,13 @@
 <template lang="pug">
 #tray
-  Piece(
-    v-for="piece in pieces"
-    :key="piece.id"
-    :piece="piece")
+  nav.controls
+    button(@click="store.init") New Game
+    button(@click="store.clear_board") Clear Board
+  .inner
+    Piece(
+      v-for="piece in pieces"
+      :key="piece.id"
+      :piece="piece")
 </template>
 
 <script setup>
@@ -13,11 +17,21 @@ import { useBlocksStore } from '@/store/blocks';
 import Piece from './TrayPiece.vue';
 
 const store = useBlocksStore();
-const pieces = computed(() => store.pieces);
+const pieces = computed(() => store.unused_pieces);
 </script>
 
 <style lang="scss" scoped>
 #tray {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.controls {
+  display: flex;
+  gap: 1rem;
+}
+.inner {
   --cell-size: 3vmin;
   display: grid;
   grid-template-columns: repeat(9, 1fr);
@@ -26,7 +40,7 @@ const pieces = computed(() => store.pieces);
   width: 80vw;
   height: 150px;
   position: relative;
-  z-index: 0;
+  z-index: 100;
 
   &::before,
   &::after {

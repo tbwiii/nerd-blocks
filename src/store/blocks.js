@@ -1,12 +1,13 @@
-import { ref, reactive } from 'vue';
+import { ref, reactive, computed } from 'vue';
+import { cloneDeep } from 'lodash-es';
 import { defineStore } from 'pinia';
 
 export const useBlocksStore = defineStore('blocks', () => {
   const pieces = reactive([
     {
       id: 'C',
-      x: 1,
-      y: 1,
+      x: null,
+      y: null,
       span: [2, 2],
       blocks: [
         [0, 0],
@@ -17,8 +18,8 @@ export const useBlocksStore = defineStore('blocks', () => {
     },
     {
       id: 'I2',
-      x: 3,
-      y: 3,
+      x: null,
+      y: null,
       span: [1, 2],
       blocks: [
         [0, 0],
@@ -27,8 +28,8 @@ export const useBlocksStore = defineStore('blocks', () => {
     },
     {
       id: 'I3',
-      x: 2,
-      y: 3,
+      x: null,
+      y: null,
       span: [1, 3],
       blocks: [
         [0, 0],
@@ -38,8 +39,8 @@ export const useBlocksStore = defineStore('blocks', () => {
     },
     {
       id: 'I4',
-      x: 1,
-      y: 3,
+      x: null,
+      y: null,
       span: [1, 4],
       blocks: [
         [0, 0],
@@ -50,8 +51,8 @@ export const useBlocksStore = defineStore('blocks', () => {
     },
     {
       id: 'J',
-      x: 4,
-      y: 4,
+      x: null,
+      y: null,
       span: [2, 3],
       blocks: [
         [0, 0],
@@ -62,15 +63,15 @@ export const useBlocksStore = defineStore('blocks', () => {
     },
     {
       id: 'O',
-      x: 4,
-      y: 2,
+      x: null,
+      y: null,
       span: [1, 1],
       blocks: [[0, 0]],
     },
     {
       id: 'R',
-      x: 3,
-      y: 1,
+      x: null,
+      y: null,
       span: [2, 2],
       blocks: [
         [0, 0],
@@ -80,8 +81,8 @@ export const useBlocksStore = defineStore('blocks', () => {
     },
     {
       id: 'T',
-      x: 5,
-      y: 5,
+      x: null,
+      y: null,
       span: [3, 2],
       blocks: [
         [1, 0],
@@ -92,8 +93,8 @@ export const useBlocksStore = defineStore('blocks', () => {
     },
     {
       id: 'Z',
-      x: 3,
-      y: 5,
+      x: null,
+      y: null,
       span: [3, 2],
       blocks: [
         [1, 0],
@@ -105,8 +106,29 @@ export const useBlocksStore = defineStore('blocks', () => {
   ]);
 
   const used_pieces = ref([]);
+  const unused_pieces = ref([]);
+  const roadblocks = ref([]);
   const inactive = ref(true);
   const active_cell = reactive({ x: 1, y: 1 });
+
+  const success = ref(false);
+
+  const create_roadblocks = () => {
+    const dice = [
+      ['f1', 'a6'],
+      ['b6', 'f2', 'e1', 'a5'],
+      ['a2', 'c2', 'b1', 'b3', 'b2', 'a3'],
+      ['f6', 'c6', 'd6', 'b5', 'a4', 'c5'],
+      ['e5', 'f5', 'd5', 'f4', 'e4', 'e6'],
+      ['a1', 'f3', 'd1', 'e2', 'd2', 'c1'],
+      ['d4', 'c3', 'e3', 'd3', 'b4', 'c4'],
+    ];
+
+    // randomly pick one value from each dice
+    roadblocks.value = dice.map(
+      die => die[Math.floor(Math.random() * die.length)]
+    );
+  };
 
   const rotate = piece => {
     const blocks = piece.blocks;
@@ -153,10 +175,24 @@ export const useBlocksStore = defineStore('blocks', () => {
     const off_board = piece_cells.some(
       cell => cell.x < 1 || cell.x > 6 || cell.y < 1 || cell.y > 6
     );
-
     if (off_board) return;
 
-    const collision = piece_cells.some(cell => {
+    const roadblock_collision = piece_cells.some(cell => {
+      return roadblocks.value.some(roadblock => {
+        const address = roadblock
+          .split('')
+          .map((part, i) => {
+            if (i === 0) return part.charCodeAt(0) - 96;
+            return parseInt(part);
+          })
+          .reverse();
+
+        return address[0] === cell.x && address[1] === cell.y;
+      });
+    });
+    if (roadblock_collision) return;
+
+    const piece_collision = piece_cells.some(cell => {
       return used_pieces.value.some(used_piece => {
         return used_piece.blocks.some(used_block => {
           return (
@@ -166,13 +202,12 @@ export const useBlocksStore = defineStore('blocks', () => {
         });
       });
     });
-
-    if (collision) return;
+    if (piece_collision) return;
 
     piece.x = active_cell.x;
     piece.y = active_cell.y;
 
-    pieces.splice(pieces.indexOf(piece), 1);
+    unused_pieces.value.splice(unused_pieces.value.indexOf(piece), 1);
     used_pieces.value.push(piece);
   };
 
@@ -181,14 +216,34 @@ export const useBlocksStore = defineStore('blocks', () => {
     piece.y = 0;
 
     used_pieces.value.splice(used_pieces.value.indexOf(piece), 1);
-    pieces.push(piece);
+    unused_pieces.value.push(piece);
+  };
+
+  const clear_board = () => {
+    used_pieces.value = [];
+    unused_pieces.value = cloneDeep(pieces);
+  };
+
+  const init = () => {
+    clear_board();
+    roadblocks.value = [];
+    inactive.value = true;
+    active_cell.x = 1;
+    active_cell.y = 1;
+    create_roadblocks();
   };
 
   return {
     pieces,
     used_pieces,
+    unused_pieces,
+    roadblocks,
     inactive,
     active_cell,
+    success,
+    init,
+    clear_board,
+    create_roadblocks,
     rotate,
     reflect,
     update_active_cell,

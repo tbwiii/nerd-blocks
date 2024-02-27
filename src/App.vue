@@ -1,23 +1,59 @@
 <template lang="pug">
 #game
-  Board
-  Tray
+  .inner(:inert="success")
+    Board
+    Tray
+
+  Transition(name="fade")
+    Victory(v-if="success")
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useBlocksStore } from '@/store/blocks';
+
 import Board from './components/Board.vue';
 import Tray from './components/Tray.vue';
+import Victory from './components/Victory.vue';
+
+const store = useBlocksStore();
+const success = computed(() => store.success);
+
+store.init();
 
 </script>
 
 <style scoped lang="scss">
+
 #game {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+
+}
+.inner {
   --cell-size: 10vmin;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2rem;
+  grid-area: 1 / 1 / 2 / 2;
+  transition: 0.5s 0.5s ease;
+
+  &[inert] {
+    pointer-events: none;
+    filter: blur(8px) grayscale(70%);
+  }
 }
 
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>

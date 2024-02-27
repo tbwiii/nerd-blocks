@@ -13,8 +13,9 @@
   --indigo: #{lighten(#540fff, 10%)};
   --purple: #cb0eff;
   --pink: #ff0ebc;
-
-  --background: var(--black);
+  --beige: #faedcd;
+  --algae: #2a9d8f;
+  --rose: #f75590;
 
   --piece-c: var(--red);
   --piece-i2: var(--orange);
@@ -25,6 +26,7 @@
   --piece-r: var(--indigo);
   --piece-t: var(--purple);
   --piece-z: var(--pink);
+  --roadblock: var(--beige);
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -58,3 +60,31 @@ body {
     background-color: #ffffff;
   }
 } */
+
+button {
+  --color: var(--rose);
+  --hover: var(--black);
+  background: none;
+  border: none;
+  font-size: 1.125rem;
+  line-height: 0;
+  margin: 0;
+  padding: 1.375rem 0.75rem 1rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  cursor: pointer;
+
+  color: var(--color);
+  transition: 0.25s;
+  box-shadow: 0.3em 0.3em 0 0 var(--color), inset 0.3em 0.3em 0 0 var(--color);
+
+  &:hover,
+  &:focus {
+    background: var(--color);
+    color: var(--hover);
+  }
+
+  & + & {
+    --color: var(--algae);
+  }
+}
