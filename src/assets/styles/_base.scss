@@ -1,5 +1,7 @@
 :root {
   // Pallette
+  --white: #dddddd;
+  --gray: #7a7a7a;
   --black: #242424;
 
   --red: #f02d3a;
@@ -8,7 +10,7 @@
   --green: #09f04a;
   --teal: #12ffd1;
   --blue: #0c85f5;
-  --indigo: #540fff;
+  --indigo: #{lighten(#540fff, 10%)};
   --purple: #cb0eff;
   --pink: #ff0ebc;
 
@@ -29,8 +31,8 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: var(--white);
+  background-color: var(--black);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -41,7 +43,8 @@
 body {
   margin: 0;
   display: flex;
-  place-items: center;
+  justify-content: center;
+  align-items: center;
   min-height: 100vh;
 }
 
