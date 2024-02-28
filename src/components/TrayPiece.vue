@@ -4,7 +4,7 @@
     button(@click="rotate")
       i.icon-rotate
   TransitionGroup.piece(
-    @click="grab_start"
+    @mousedown="grab_start"
     :id="piece.id"
     :style="style"
     :name="dragging ? 'none' : 'token'"
@@ -41,14 +41,15 @@ const style = reactive({
 const grab_start = (e) => {
   if (dragging.value) return;
   dragging.value = true;
+  store.set_placing(true);
 
   style.top = `calc(${e.clientY}px - 5vmin)`;
   style.left = `calc(${e.clientX}px - 5vmin)`;
 
   window.addEventListener('mousemove', grab_move);
   setTimeout(() => {
-    window.addEventListener('click', grab_end);
-  }, 50);
+    window.addEventListener('mouseup', grab_end);
+  }, 150);
 }
 
 const grab_move = (e) => {
@@ -58,10 +59,11 @@ const grab_move = (e) => {
 
 const grab_end = (e) => {
   window.removeEventListener('mousemove', grab_move);
-  window.removeEventListener('click', grab_end);
+  window.removeEventListener('mouseup', grab_end);
 
   store.place_piece(props.piece);
   dragging.value = false;
+  store.set_placing(false);
 }
 
 const rotate = () => store.rotate(props.piece);

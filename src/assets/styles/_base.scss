@@ -3,6 +3,7 @@
   --white: #ddd;
   --gray: #7a7a7a;
   --black: #242424;
+
   --red: #f02d3a;
   --orange: #ff510b;
   --yellow: #ffca09;
@@ -10,9 +11,10 @@
   --teal: #12ffd1;
   --blue: #0c85f5;
   --indigo: #{lighten(#540fff, 10%)};
-  --purple: #cb0eff;
+  --violet: #cb0eff;
   --pink: #ff0ebc;
   --beige: #faedcd;
+
   --piece-c: var(--red);
   --piece-i2: var(--orange);
   --piece-i3: var(--yellow);
@@ -20,8 +22,9 @@
   --piece-j: var(--teal);
   --piece-o: var(--blue);
   --piece-r: var(--indigo);
-  --piece-t: var(--purple);
+  --piece-t: var(--violet);
   --piece-z: var(--pink);
+
   --roadblock: var(--beige);
   font-family: 'Kode Mono', monospace;
   font-optical-sizing: auto;
@@ -35,6 +38,20 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  box-sizing: border-box;
+  *,
+  *::before,
+  *::after {
+    box-sizing: inherit;
+  }
+
+  &.placing,
+  &.placing * {
+    cursor: none !important;
+  }
 }
 
 body {

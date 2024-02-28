@@ -105,11 +105,14 @@ export const useBlocksStore = defineStore('blocks', () => {
     },
   ]);
 
+  const placing = ref(false);
   const used_pieces = ref([]);
   const unused_pieces = ref([]);
   const roadblocks = ref([]);
   const inactive = ref(true);
   const active_cell = reactive({ x: 1, y: 1 });
+
+  const set_placing = value => (placing.value = value);
 
   const success = computed(
     () => used_pieces.value.length === pieces.value.length
@@ -238,8 +241,29 @@ export const useBlocksStore = defineStore('blocks', () => {
     unused_pieces.value = cloneDeep(pieces.value);
   };
 
+  const set_colors = () => {
+    const pieces = [
+      '--piece-c',
+      '--piece-i2',
+      '--piece-i3',
+      '--piece-i4',
+      '--piece-j',
+      '--piece-o',
+      '--piece-r',
+      '--piece-t',
+      '--piece-z',
+    ];
+
+    const colors = generateDistinctColors(pieces.length);
+
+    pieces.forEach((piece, i) => {
+      document.documentElement.style.setProperty(piece, colors[i]);
+    });
+  };
+
   const init = () => {
     clear_board();
+    // set_colors();
     roadblocks.value = [];
     inactive.value = true;
     active_cell.x = 1;
@@ -255,6 +279,7 @@ export const useBlocksStore = defineStore('blocks', () => {
     inactive,
     active_cell,
     success,
+    placing,
     init,
     clear_board,
     create_roadblocks,
@@ -263,5 +288,80 @@ export const useBlocksStore = defineStore('blocks', () => {
     update_active_cell,
     place_piece,
     return_piece,
+    set_placing,
   };
 });
+
+function generateDistinctColors(count) {
+  const colors = [];
+  const hueStep = 360 / count; // Distribute hues evenly around the color wheel
+
+  for (let i = 0; i < count; i++) {
+    const hue = Math.floor(i * hueStep);
+    const saturation = 0.75 + Math.random() * 0.25; // 75-100%
+    const brightness = 0.75 + Math.random() * 0.25; // 75-100%
+    const rgb = HSVtoRGB(hue, saturation, brightness);
+    const hex = RGBtoHEX(rgb.r, rgb.g, rgb.b);
+    colors.push(hex);
+  }
+
+  return colors;
+}
+
+function HSVtoRGB(h, s, v) {
+  let r, g, b, i, f, p, q, t;
+  if (s === 0) {
+    r = g = b = v; // achromatic
+  } else {
+    h /= 60; // sector 0 to 5
+    i = Math.floor(h);
+    f = h - i; // factorial part of h
+    p = v * (1 - s);
+    q = v * (1 - s * f);
+    t = v * (1 - s * (1 - f));
+    switch (i) {
+      case 0:
+        r = v;
+        g = t;
+        b = p;
+        break;
+      case 1:
+        r = q;
+        g = v;
+        b = p;
+        break;
+      case 2:
+        r = p;
+        g = v;
+        b = t;
+        break;
+      case 3:
+        r = p;
+        g = q;
+        b = v;
+        break;
+      case 4:
+        r = t;
+        g = p;
+        b = v;
+        break;
+      default:
+        r = v;
+        g = p;
+        b = q;
+        break;
+    }
+  }
+  return {
+    r: Math.round(r * 255),
+    g: Math.round(g * 255),
+    b: Math.round(b * 255),
+  };
+}
+
+function RGBtoHEX(r, g, b) {
+  return (
+    '#' +
+    ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()
+  );
+}

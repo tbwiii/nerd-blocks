@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useBlocksStore } from '@/store/blocks';
 
 import Board from './components/Board.vue';
@@ -17,14 +17,19 @@ import Tray from './components/Tray.vue';
 import Victory from './components/Victory.vue';
 
 const store = useBlocksStore();
+const placing = computed(() => store.placing);
 const success = computed(() => store.success);
 
 store.init();
 
+watch(placing, (value) => {
+  if (value) document.documentElement.classList.add('placing');
+  else document.documentElement.classList.remove('placing');
+});
+
 </script>
 
 <style scoped lang="scss">
-
 #game {
   display: grid;
   grid-template-columns: 1fr;

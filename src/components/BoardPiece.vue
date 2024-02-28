@@ -1,6 +1,6 @@
 <template lang="pug">
 .piece(
-  @click="grab_start"
+  @mousedown="grab_start"
   :id="piece.id"
   :class="{dragging}"
   :style=`{
@@ -16,7 +16,7 @@
       'grid-row-start': block.y,
     }`
   )
-    button(v-if="i === 0" @click="return_piece")
+    button(v-if="i === 0" @click.stop="return_piece")
       i.icon-back
 </template>
 
@@ -50,14 +50,15 @@ const style = reactive({
 const grab_start = (e) => {
   if (dragging.value) return;
   dragging.value = true;
+  store.set_placing(true);
 
   style.top = `calc(${e.clientY}px - 5vmin)`;
   style.left = `calc(${e.clientX}px - 5vmin)`;
 
   window.addEventListener('mousemove', grab_move);
   setTimeout(() => {
-    window.addEventListener('click', grab_end);
-  }, 50);
+    window.addEventListener('mouseup', grab_end);
+  }, 150);
 }
 
 const grab_move = (e) => {
@@ -67,10 +68,11 @@ const grab_move = (e) => {
 
 const grab_end = (e) => {
   window.removeEventListener('mousemove', grab_move);
-  window.removeEventListener('click', grab_end);
+  window.removeEventListener('mouseup', grab_end);
 
   store.place_piece(props.piece, true);
   dragging.value = false;
+  store.set_placing(false);
 }
 
 const blocks = computed(() => {

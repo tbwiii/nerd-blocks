@@ -152,6 +152,7 @@ onMounted(make_confetti);
   0% {
     opacity: 0;
     transform: translateY(0%) rotate(0deg);
+    z-index: -1;
   }
 
   10% {
@@ -159,7 +160,8 @@ onMounted(make_confetti);
   }
 
   35% {
-    transform: translateY(-1700%) rotate(270deg);
+    transform: translateY(-2200%) rotate(270deg);
+    z-index: 2;
   }
 
   80% {
@@ -168,7 +170,8 @@ onMounted(make_confetti);
 
   100% {
     opacity: 0;
-    transform: translateY(1500%) rotate(980deg);
+    transform: translateY(1000%) rotate(980deg);
+    z-index: 2;
   }
 }
 </style>
