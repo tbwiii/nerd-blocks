@@ -1,34 +1,25 @@
 <template lang="pug">
-.container(
+TransitionGroup.piece(
+  @mousedown="grab_start"
+  :id="piece.id"
   :class="{dragging}"
   :style=`{
-    display: tray ? false : 'contents',
-  }`)
-  .control(v-if="tray")
-    button(@click="rotate")
-      i.icon-rotate
-    button(@click="reflect")
-      i.icon-flip
-  TransitionGroup.piece(
-    @mousedown="grab_start"
-    :id="piece.id"
+    ...style,
+    ...(!tray && {
+      'grid-column': column,
+      'grid-row': row,
+    })
+  }`
+  tag="div"
+  )
+  .block(
+    v-for="block, i in blocks"
+    :key="i"
     :style=`{
-      ...style,
-      ...(!tray && {
-        'grid-column': column,
-        'grid-row': row,
-      })
+      'grid-column-start': block.x,
+      'grid-row-start': block.y,
     }`
-    tag="div"
-    )
-    .block(
-      v-for="block, i in blocks"
-      :key="i"
-      :style=`{
-        'grid-column-start': block.x,
-        'grid-row-start': block.y,
-      }`
-    )
+  )
 </template>
 
 <script setup>
@@ -128,40 +119,4 @@ const blocks = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-.container {
-  --gap: calc(var(--cell-size) * (3 / 40));
-  --size: calc(var(--cell-size));
-
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto calc(var(--size) * 4 + var(--gap) * 3) auto;
-  gap: 0.5rem;
-  padding: 0.75rem 0;
-
-  &:hover:not(.dragging) {
-    .control {
-      opacity: 1;
-      visibility: visible;
-    }
-  }
-}
-
-.control {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2rem;
-  opacity: 0;
-  visibility: hidden;
-  transition: 0.2s ease;
-
-  i {
-    font-size: 1.25rem;
-  }
-}
-
-.piece {
-  align-self: center;
-  justify-self: center;
-}
 </style>

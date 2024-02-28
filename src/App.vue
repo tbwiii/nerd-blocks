@@ -1,15 +1,19 @@
 <template lang="pug">
 #game
+  Transition(name="fade")
+    template(v-if="loading")
+      .loader
+        h1 loading...
   .inner(:inert="success")
     Board
-    Tray
+    Tray(v-if="ready")
 
   Transition(name="fade")
     Victory(v-if="success")
 </template>
 
 <script setup>
-import { computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useBlocksStore } from '@/store/blocks';
 
 import Board from './components/Board.vue';
@@ -19,12 +23,23 @@ import Victory from './components/Victory.vue';
 const store = useBlocksStore();
 const placing = computed(() => store.placing);
 const success = computed(() => store.success);
+const ready = ref(false);
+const loading = ref(true);
 
 store.init();
 
 watch(placing, (value) => {
   if (value) document.documentElement.classList.add('placing');
   else document.documentElement.classList.remove('placing');
+});
+
+onMounted(() => {
+  setTimeout(() => {
+    ready.value = true;
+    setTimeout(() => {
+      loading.value = false;
+    }, 500);
+  }, 500);
 });
 
 </script>
@@ -49,6 +64,20 @@ watch(placing, (value) => {
   &[inert] {
     filter: grayscale(70%);
     opacity: 0.1;
+  }
+}
+
+.loader {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--black);
+  z-index: 1000;
+
+  * {
+    margin: 0;
   }
 }
 

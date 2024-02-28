@@ -18,11 +18,11 @@
       :key="cell.id"
       :cell="cell")
   
-  #grid
-    Piece(
-      v-for="piece in pieces"
-      :key="piece.id"
-      :piece="piece")
+  #grid_host
+    //- Piece(
+    //-   v-for="piece in pieces"
+    //-   :key="piece.id"
+    //-   :piece="piece")
 </template>
 
 <script setup>
@@ -31,10 +31,10 @@ import { useMouseInElement } from '@vueuse/core';
 import { useBlocksStore } from '@/store/blocks';
 
 import Cell from './BoardCell.vue';
-import Piece from './BoardPiece.vue';
+// import Piece from './BoardPiece.vue';
 
 const store = useBlocksStore();
-const pieces = computed(() => store.used_pieces);
+// const pieces = computed(() => store.used_pieces);
 
 const map = ref(null);
 const { isOutside } = useMouseInElement(map);
@@ -144,15 +144,10 @@ const grid = computed(() => {
   align-self: start;
 }
 
-#grid {
-  position: relative;
+#grid_host {
   display: grid;
-  grid-template-columns: repeat(6, var(--cell-size));
-  grid-template-rows: repeat(6, var(--cell-size));
+  grid-template-columns: 100%;
+  grid-template-rows: 100%;
   grid-area: 2 / 2 / 3 / 3;
-  gap: 1px;
-  border: 1px solid transparent;
-  align-self: start;
-  z-index: 2;
 }
 </style>

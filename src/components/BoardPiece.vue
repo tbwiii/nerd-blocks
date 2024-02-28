@@ -1,8 +1,9 @@
 <template lang="pug">
-.piece(
+TransitionGroup.piece(
   @mousedown="grab_start"
   :id="piece.id"
   :class="{dragging}"
+  tag="div"
   :style=`{
     ...style,
     'grid-column': column,
@@ -41,6 +42,7 @@ const row = computed(() => {
   return `${start} / span ${end}`;
 });
 
+const animating = ref(false);
 const dragging = ref(false);
 const style = reactive({
   top: 0,
@@ -58,6 +60,7 @@ const grab_start = (e) => {
   window.addEventListener('mousemove', grab_move);
   setTimeout(() => {
     window.addEventListener('mouseup', grab_end);
+    window.addEventListener('keyup', triage_key);
   }, 150);
 }
 
@@ -69,10 +72,34 @@ const grab_move = (e) => {
 const grab_end = (e) => {
   window.removeEventListener('mousemove', grab_move);
   window.removeEventListener('mouseup', grab_end);
+  window.removeEventListener('keyup', triage_key);
 
   store.place_piece(props.piece, true);
   dragging.value = false;
   store.set_placing(false);
+}
+
+const rotate = () => {
+  if (animating.value) return;
+  animating.value = true;
+  store.rotate(props.piece);
+  setTimeout(() => {
+    animating.value = false;
+  }, 250);
+}
+const reflect = () => {
+  if (animating.value) return;
+  animating.value = true;
+  store.reflect(props.piece);
+  setTimeout(() => {
+    animating.value = false;
+  }, 250);
+}
+
+const triage_key = (e) => {
+  if (e.key === 'Enter' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') reflect();
+  if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'ArrowDown') rotate();
+  if (e.key === 'Escape') grab_end();
 }
 
 const blocks = computed(() => {
@@ -82,12 +109,6 @@ const blocks = computed(() => {
 
     x += 1;
     y += 1;
-    if (props.piece.offset_x) {
-      x += props.piece.offset_x;
-    }
-    if (props.piece.offset_y) {
-      y += props.piece.offset_y;
-    }
 
     return {
       x,
