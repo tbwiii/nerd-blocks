@@ -1,5 +1,11 @@
 <template lang="pug">
 #board
+  #controls
+    h1
+      span Nerd
+      span Blocks
+    button.btn(@click="store.init") New Game
+    button.btn(@click="store.clear_board") Clear Board
   #files
     .label(v-for="column in columns") {{ column }}
 
@@ -59,8 +65,34 @@ const grid = computed(() => {
 <style lang="scss" scoped>
 #board {
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: auto auto auto;
   grid-template-rows: auto auto;
+}
+
+#controls {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem;
+  gap: 1rem;
+  grid-area: 1 / 3 / 3 / 4;
+
+  h1 {
+    display: flex;
+    flex-direction: column;
+    font-size: 4rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1;
+
+    span {
+      color: var(--teal);
+
+      &:last-child {
+        color: var(--indigo);
+      }
+    }
+  }
 }
 
 #ranks,

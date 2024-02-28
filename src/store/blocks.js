@@ -1,9 +1,9 @@
 import { ref, reactive, computed } from 'vue';
-import { cloneDeep } from 'lodash-es';
+import { cloneDeep, remove } from 'lodash-es';
 import { defineStore } from 'pinia';
 
 export const useBlocksStore = defineStore('blocks', () => {
-  const pieces = reactive([
+  const pieces = ref([
     {
       id: 'C',
       x: null,
@@ -111,7 +111,11 @@ export const useBlocksStore = defineStore('blocks', () => {
   const inactive = ref(true);
   const active_cell = reactive({ x: 1, y: 1 });
 
-  const success = ref(false);
+  const success = computed(
+    () => used_pieces.value.length === pieces.value.length
+  );
+
+  // const success = ref(true);
 
   const create_roadblocks = () => {
     const dice = [
@@ -164,9 +168,7 @@ export const useBlocksStore = defineStore('blocks', () => {
     }
   };
 
-  const place_piece = piece => {
-    if (inactive.value) return;
-
+  const validate_placement = piece => {
     const piece_cells = piece.blocks.map(block => ({
       x: block[0] + active_cell.x,
       y: block[1] + active_cell.y,
@@ -175,7 +177,6 @@ export const useBlocksStore = defineStore('blocks', () => {
     const off_board = piece_cells.some(
       cell => cell.x < 1 || cell.x > 6 || cell.y < 1 || cell.y > 6
     );
-    if (off_board) return;
 
     const roadblock_collision = piece_cells.some(cell => {
       return roadblocks.value.some(roadblock => {
@@ -190,38 +191,51 @@ export const useBlocksStore = defineStore('blocks', () => {
         return address[0] === cell.x && address[1] === cell.y;
       });
     });
-    if (roadblock_collision) return;
 
     const piece_collision = piece_cells.some(cell => {
-      return used_pieces.value.some(used_piece => {
-        return used_piece.blocks.some(used_block => {
-          return (
-            used_block[0] + used_piece.x === cell.x &&
-            used_block[1] + used_piece.y === cell.y
-          );
+      return used_pieces.value
+        .filter(p => p !== piece)
+        .some(used_piece => {
+          return used_piece.blocks.some(used_block => {
+            return (
+              used_block[0] + used_piece.x === cell.x &&
+              used_block[1] + used_piece.y === cell.y
+            );
+          });
         });
-      });
     });
-    if (piece_collision) return;
+
+    return !off_board && !roadblock_collision && !piece_collision;
+  };
+
+  const place_piece = (piece, already_placed = false) => {
+    if (inactive.value) {
+      if (already_placed) return_piece(piece);
+      return;
+    }
+
+    if (!validate_placement(piece)) return;
 
     piece.x = active_cell.x;
     piece.y = active_cell.y;
 
-    unused_pieces.value.splice(unused_pieces.value.indexOf(piece), 1);
-    used_pieces.value.push(piece);
+    if (already_placed) return;
+
+    const mover = remove(unused_pieces.value, p => p === piece);
+    used_pieces.value.push(...mover);
   };
 
   const return_piece = piece => {
     piece.x = 0;
     piece.y = 0;
 
-    used_pieces.value.splice(used_pieces.value.indexOf(piece), 1);
-    unused_pieces.value.push(piece);
+    const mover = remove(used_pieces.value, p => p === piece);
+    unused_pieces.value.push(...mover);
   };
 
   const clear_board = () => {
     used_pieces.value = [];
-    unused_pieces.value = cloneDeep(pieces);
+    unused_pieces.value = cloneDeep(pieces.value);
   };
 
   const init = () => {

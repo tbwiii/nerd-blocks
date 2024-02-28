@@ -39,17 +39,17 @@ store.init();
   justify-content: center;
   gap: 2rem;
   grid-area: 1 / 1 / 2 / 2;
-  transition: 0.5s 0.5s ease;
+  transition: 0.5s ease;
 
   &[inert] {
-    pointer-events: none;
-    filter: blur(8px) grayscale(70%);
+    filter: grayscale(70%);
+    opacity: 0.1;
   }
 }
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.5s 0.5s ease;
+  transition: opacity 0.5s ease;
 }
 
 .fade-enter-from,

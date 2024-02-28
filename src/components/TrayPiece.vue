@@ -1,22 +1,26 @@
 <template lang="pug">
-TransitionGroup.piece(
-  @click="triage_click"
-  @mousedown="grab_start"
-  :id="piece.id"
-  :style="style"
-  :class="{dragging}"
-  :name="dragging ? 'none' : 'token'"
-  tag="div"
-  ref="el"
-  )
-  .block(
-    v-for="block, i in blocks"
-    :key="i"
-    :style=`{
-      'grid-column-start': block.x,
-      'grid-row-start': block.y,
-    }`
-  )
+.container(:class="{dragging}")
+  .control
+    button(@click="rotate")
+      i.icon-rotate
+  TransitionGroup.piece(
+    @click="grab_start"
+    :id="piece.id"
+    :style="style"
+    :name="dragging ? 'none' : 'token'"
+    tag="div"
+    )
+    .block(
+      v-for="block, i in blocks"
+      :key="i"
+      :style=`{
+        'grid-column-start': block.x,
+        'grid-row-start': block.y,
+      }`
+    )
+  .control
+    button(@click="reflect")
+      i.icon-flip
 </template>
 
 <script setup>
@@ -28,45 +32,24 @@ const props = defineProps({
   piece: Object
 });
 
-const el = ref(null);
 const dragging = ref(false);
 const style = reactive({
   top: 0,
   left: 0
 });
 
-let dragStartTime = 0;
-let hasMoved = false;
-
 const grab_start = (e) => {
-  dragStartTime = Date.now();
-  hasMoved = false;
+  if (dragging.value) return;
+  dragging.value = true;
 
-  const initialX = e.clientX;
-  const initialY = e.clientY;
+  style.top = `calc(${e.clientY}px - 5vmin)`;
+  style.left = `calc(${e.clientX}px - 5vmin)`;
 
-  const moveHandler = (moveEvent) => {
-    const dx = moveEvent.clientX - initialX;
-    const dy = moveEvent.clientY - initialY;
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-      hasMoved = true;
-
-      style.top = `calc(${moveEvent.clientY}px - 5vmin)`;
-      style.left = `calc(${moveEvent.clientX}px - 5vmin)`;
-
-      if (!dragging.value) {
-        dragging.value = true;
-        window.addEventListener('mousemove', grab_move);
-      }
-    }
-  };
-
-  window.addEventListener('mousemove', moveHandler);
-  window.addEventListener('mouseup', () => {
-    window.removeEventListener('mousemove', moveHandler);
-    grab_end(e);
-  }, { once: true });
-};
+  window.addEventListener('mousemove', grab_move);
+  setTimeout(() => {
+    window.addEventListener('click', grab_end);
+  }, 50);
+}
 
 const grab_move = (e) => {
   style.top = `calc(${e.clientY}px - 5vmin)`;
@@ -74,44 +57,15 @@ const grab_move = (e) => {
 }
 
 const grab_end = (e) => {
-  const duration = Date.now() - dragStartTime;
-  if (hasMoved || duration > 200) { // Adjust the duration threshold as needed
-    e.stopPropagation();
-    e.preventDefault();
-    window.removeEventListener('mousemove', grab_move);
+  window.removeEventListener('mousemove', grab_move);
+  window.removeEventListener('click', grab_end);
 
-    if (dragging.value) {
-      store.place_piece(props.piece);
-      setTimeout(() => {
-        dragging.value = false;
-      }, 100);
-    }
-  }
-};
-
+  store.place_piece(props.piece);
+  dragging.value = false;
+}
 
 const rotate = () => store.rotate(props.piece);
 const reflect = () => store.reflect(props.piece);
-
-const click = ref(null);
-const triage_click = async () => {
-  const triage = new Promise((resolve) => {
-    if (dragging.value) return;
-
-    if (click.value) {
-      clearTimeout(click.value)
-      resolve('dblclick')
-    }
-    click.value = setTimeout(() => {
-      click.value = null;
-      resolve('click')
-    }, 200);
-  });
-  const result = await triage;
-
-  if (result === 'click') rotate();
-  if (result === 'dblclick') reflect();
-}
 
 const blocks = computed(() => {
   return props.piece.blocks.map((block) => {
@@ -139,21 +93,40 @@ const blocks = computed(() => {
   transition: all 0.2s ease;
 }
 
+.container {
+  --gap: calc(var(--cell-size) * (3 / 40));
+  --size: calc(var(--cell-size));
+
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto calc(var(--size) * 4 + var(--gap) * 3) auto;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+
+  &:hover:not(.dragging) {
+    .control {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.2s ease;
+
+  i {
+    font-size: 1.25rem;
+  }
+}
+
 .piece {
-  transition-property: grid-auto-columns, grid-auto-rows;
-  transition-duration: 0.2s;
-  transition-timing-function: ease;
-
-  &.dragging {
-    --cell-size: 10vmin;
-    z-index: 100;
-    position: fixed;
-  }
-
-  .block {
-    // transition-property: height, width;
-    // transition-duration: 0.2s;
-    // transition-timing-function: ease;
-  }
-
-}</style>
+  align-self: center;
+  justify-self: center;
+}
+</style>

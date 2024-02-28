@@ -1,8 +1,5 @@
 <template lang="pug">
-#tray
-  nav.controls
-    button(@click="store.init") New Game
-    button(@click="store.clear_board") Clear Board
+#tray(v-if="pieces.length")
   .inner
     Piece(
       v-for="piece in pieces"
@@ -21,24 +18,30 @@ const pieces = computed(() => store.unused_pieces);
 </script>
 
 <style lang="scss" scoped>
+
+.tray-enter-active,
+.tray-leave-active {
+  transition: height 0.5s ease;
+}
+
+.tray-enter-from,
+.tray-leave-to {
+  height: 0;
+}
+
 #tray {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.controls {
-  display: flex;
-  gap: 1rem;
-}
 .inner {
   --cell-size: 3vmin;
   display: grid;
   grid-template-columns: repeat(9, 1fr);
-  place-content: center;
-  place-items: center;
+  align-items: center;
+  justify-items: center;
   width: 80vw;
-  height: 150px;
   position: relative;
   z-index: 100;
 
