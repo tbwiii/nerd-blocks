@@ -8,27 +8,27 @@
 //   font-display: block;
 // }
 
-[class^='icon-'],
-[class*=' icon-'] {
-  position: relative;
-  &::before {
-    content: '';
-    display: block;
-    height: 1em;
-    width: 1em;
-    background-size: contain;
-    filter: brightness(0) invert(1);
-  }
-}
+// [class^='icon-'],
+// [class*=' icon-'] {
+//   position: relative;
+//   &::before {
+//     content: '';
+//     display: block;
+//     height: 1em;
+//     width: 1em;
+//     background-size: contain;
+//     filter: brightness(0) invert(1);
+//   }
+// }
 
-.icon-rotate::before {
-  background-image: url('/images/icons/rotate.png');
-}
+// .icon-rotate::before {
+//   background-image: url('/images/icons/rotate.png');
+// }
 
-.icon-flip::before {
-  background-image: url('/images/icons/flip.png');
-}
+// .icon-flip::before {
+//   background-image: url('/images/icons/flip.png');
+// }
 
-.icon-back::before {
-  background-image: url('/images/icons/back.png');
-}
+// .icon-back::before {
+//   background-image: url('/images/icons/back.png');
+// }

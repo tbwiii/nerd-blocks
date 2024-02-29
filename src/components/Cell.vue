@@ -1,7 +1,6 @@
 <template lang="pug">
-.cell(
+span.cell(
   :id="props.cell.id"
-  :class="{ roadblock }"
   ref="cell")
 </template>
 
@@ -17,10 +16,6 @@ const props = defineProps({
 
 const cell = ref(null);
 const { isOutside } = useMouseInElement(cell);
-
-const roadblock = computed(() => {
-  return store.roadblocks.includes(props.cell.id);
-});
 
 watch(isOutside, (value) => {
   if (!value) {

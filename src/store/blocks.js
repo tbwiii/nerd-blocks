@@ -1,5 +1,4 @@
 import { ref, reactive, computed } from 'vue';
-import { cloneDeep, remove } from 'lodash-es';
 import { defineStore } from 'pinia';
 
 export const useBlocksStore = defineStore('blocks', () => {
@@ -8,6 +7,9 @@ export const useBlocksStore = defineStore('blocks', () => {
       id: 'C',
       x: null,
       y: null,
+      position: { top: 0, left: 0 },
+      size: { height: 0, width: 0 },
+      placed: false,
       span: [2, 2],
       blocks: [
         [0, 0],
@@ -20,6 +22,9 @@ export const useBlocksStore = defineStore('blocks', () => {
       id: 'I2',
       x: null,
       y: null,
+      position: { top: 0, left: 0 },
+      size: { height: 0, width: 0 },
+      placed: false,
       span: [1, 2],
       blocks: [
         [0, 0],
@@ -30,6 +35,9 @@ export const useBlocksStore = defineStore('blocks', () => {
       id: 'I3',
       x: null,
       y: null,
+      position: { top: 0, left: 0 },
+      size: { height: 0, width: 0 },
+      placed: false,
       span: [1, 3],
       blocks: [
         [0, 0],
@@ -41,6 +49,9 @@ export const useBlocksStore = defineStore('blocks', () => {
       id: 'I4',
       x: null,
       y: null,
+      position: { top: 0, left: 0 },
+      size: { height: 0, width: 0 },
+      placed: false,
       span: [1, 4],
       blocks: [
         [0, 0],
@@ -53,6 +64,9 @@ export const useBlocksStore = defineStore('blocks', () => {
       id: 'J',
       x: null,
       y: null,
+      position: { top: 0, left: 0 },
+      size: { height: 0, width: 0 },
+      placed: false,
       span: [2, 3],
       blocks: [
         [0, 0],
@@ -65,6 +79,9 @@ export const useBlocksStore = defineStore('blocks', () => {
       id: 'O',
       x: null,
       y: null,
+      position: { top: 0, left: 0 },
+      size: { height: 0, width: 0 },
+      placed: false,
       span: [1, 1],
       blocks: [[0, 0]],
     },
@@ -72,6 +89,9 @@ export const useBlocksStore = defineStore('blocks', () => {
       id: 'R',
       x: null,
       y: null,
+      position: { top: 0, left: 0 },
+      size: { height: 0, width: 0 },
+      placed: false,
       span: [2, 2],
       blocks: [
         [0, 0],
@@ -83,6 +103,9 @@ export const useBlocksStore = defineStore('blocks', () => {
       id: 'T',
       x: null,
       y: null,
+      position: { top: 0, left: 0 },
+      size: { height: 0, width: 0 },
+      placed: false,
       span: [3, 2],
       blocks: [
         [1, 0],
@@ -95,6 +118,9 @@ export const useBlocksStore = defineStore('blocks', () => {
       id: 'Z',
       x: null,
       y: null,
+      position: { top: 0, left: 0 },
+      size: { height: 0, width: 0 },
+      placed: false,
       span: [3, 2],
       blocks: [
         [1, 0],
@@ -106,8 +132,6 @@ export const useBlocksStore = defineStore('blocks', () => {
   ]);
 
   const placing = ref(false);
-  const used_pieces = ref([]);
-  const unused_pieces = ref([]);
   const roadblocks = ref([]);
   const inactive = ref(true);
   const active_cell = reactive({ x: 1, y: 1 });
@@ -115,10 +139,9 @@ export const useBlocksStore = defineStore('blocks', () => {
   const set_placing = value => (placing.value = value);
 
   const success = computed(
-    () => used_pieces.value.length === pieces.value.length
+    () =>
+      pieces.value.filter(piece => piece.placed).length === pieces.value.length
   );
-
-  // const success = ref(true);
 
   const create_roadblocks = () => {
     const dice = [
@@ -131,15 +154,22 @@ export const useBlocksStore = defineStore('blocks', () => {
       ['d4', 'c3', 'e3', 'd3', 'b4', 'c4'],
     ];
 
-    // randomly pick one value from each dice
-    roadblocks.value = dice.map(
-      die => die[Math.floor(Math.random() * die.length)]
-    );
+    roadblocks.value = dice.map(die => {
+      return die[Math.floor(Math.random() * die.length)]
+        .split('')
+        .map((part, i) => {
+          if (i === 0) return part.charCodeAt(0) - 96;
+          return parseInt(part);
+        })
+        .reverse();
+    });
   };
 
-  const rotate = piece => {
+  const rotate = (piece, counterclockwise = false) => {
     const blocks = piece.blocks;
-    const rotated = blocks.map(block => [-block[1], block[0]]);
+    const rotated = blocks.map(block =>
+      counterclockwise ? [block[1], -block[0]] : [-block[1], block[0]]
+    );
     const minX = Math.min(...rotated.map(block => block[0]));
     const minY = Math.min(...rotated.map(block => block[1]));
     const adjusted = rotated.map(block => [block[0] - minX, block[1] - minY]);
@@ -148,17 +178,29 @@ export const useBlocksStore = defineStore('blocks', () => {
     piece.span.reverse();
   };
 
-  const reflect = piece => {
+  const reflect = (piece, horizontal = false) => {
     const blocks = piece.blocks;
-    const reflected = blocks.map(block => [-block[0], block[1]]);
-    const minX = Math.min(...reflected.map(block => block[0]));
-    const maxX = Math.max(...reflected.map(block => block[0]));
-    const adjusted = reflected.map(block => [
-      block[0] - Math.min(minX, 0) + (minX >= 0 ? maxX : 0),
-      block[1],
-    ]);
+    const reflected = blocks.map(block =>
+      horizontal ? [block[0], -block[1]] : [-block[0], block[1]]
+    );
 
-    piece.blocks = adjusted;
+    if (horizontal) {
+      const minY = Math.min(...reflected.map(block => block[1]));
+      const maxY = Math.max(...reflected.map(block => block[1]));
+      const adjusted = reflected.map(block => [
+        block[0],
+        block[1] - Math.min(minY, 0) + (minY >= 0 ? maxY : 0),
+      ]);
+      piece.blocks = adjusted;
+    } else {
+      const minX = Math.min(...reflected.map(block => block[0]));
+      const maxX = Math.max(...reflected.map(block => block[0]));
+      const adjusted = reflected.map(block => [
+        block[0] - Math.min(minX, 0) + (minX >= 0 ? maxX : 0),
+        block[1],
+      ]);
+      piece.blocks = adjusted;
+    }
   };
 
   const update_active_cell = cell => {
@@ -183,21 +225,13 @@ export const useBlocksStore = defineStore('blocks', () => {
 
     const roadblock_collision = piece_cells.some(cell => {
       return roadblocks.value.some(roadblock => {
-        const address = roadblock
-          .split('')
-          .map((part, i) => {
-            if (i === 0) return part.charCodeAt(0) - 96;
-            return parseInt(part);
-          })
-          .reverse();
-
-        return address[0] === cell.x && address[1] === cell.y;
+        return roadblock[0] === cell.x && roadblock[1] === cell.y;
       });
     });
 
     const piece_collision = piece_cells.some(cell => {
-      return used_pieces.value
-        .filter(p => p !== piece)
+      return pieces.value
+        .filter(p => p !== piece && p.placed)
         .some(used_piece => {
           return used_piece.blocks.some(used_block => {
             return (
@@ -211,70 +245,185 @@ export const useBlocksStore = defineStore('blocks', () => {
     return !off_board && !roadblock_collision && !piece_collision;
   };
 
-  const place_piece = (piece, already_placed = false) => {
-    if (inactive.value) {
-      if (already_placed) return_piece(piece);
-      return;
+  const get_piece_position = ({ height, width }, resetCache = false) => {
+    const screen_size = {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
+
+    // Attempt to retrieve or initialize placement data
+    let placement_data = sessionStorage.getItem('placementData');
+    if (placement_data && !resetCache) {
+      placement_data = JSON.parse(placement_data);
+    } else {
+      sessionStorage.removeItem('placementData');
+      placement_data = { placed_pieces: [] };
     }
 
-    if (!validate_placement(piece)) return;
+    let avoid_data = sessionStorage.getItem('avoidData');
+    if (avoid_data && !resetCache) {
+      avoid_data = JSON.parse(avoid_data);
+    } else {
+      sessionStorage.removeItem('avoidData');
+      avoid_data = null;
+    }
+
+    if (!avoid_data) {
+      const avoid_elements = [...document.querySelectorAll('[data-avoid]')].map(
+        elem => {
+          const rect = elem.getBoundingClientRect();
+          return {
+            left: rect.left,
+            top: rect.top,
+            right: rect.left + rect.width,
+            bottom: rect.top + rect.height,
+          };
+        }
+      );
+
+      avoid_data = {
+        screen_width: screen_size.width,
+        screen_height: screen_size.height,
+        avoid_elements,
+      };
+
+      sessionStorage.setItem('avoidData', JSON.stringify(avoid_data));
+    }
+
+    const does_overlap = (elem_rect, elements) =>
+      elements.some(
+        other_rect =>
+          !(
+            elem_rect.right < other_rect.left ||
+            elem_rect.left > other_rect.right ||
+            elem_rect.bottom < other_rect.top ||
+            elem_rect.top > other_rect.bottom
+          )
+      );
+
+    const max_attempts = 200;
+    let attempts = 0;
+    let x, y, test_rect;
+
+    while (attempts++ < max_attempts) {
+      x = Math.floor(Math.random() * (screen_size.width - width - 40)) + 20; // 20px buffer on left and right
+      y = Math.floor(Math.random() * (screen_size.height - height - 40)) + 20; // 20px buffer on top and bottom
+      test_rect = {
+        left: x,
+        top: y,
+        right: x + width,
+        bottom: y + height,
+      };
+
+      if (
+        !does_overlap(test_rect, avoid_data.avoid_elements) &&
+        !does_overlap(test_rect, placement_data.placed_pieces)
+      ) {
+        placement_data.placed_pieces.push(test_rect);
+        sessionStorage.setItem('placementData', JSON.stringify(placement_data));
+        return { left: x, top: y };
+      }
+    }
+
+    placement_data.placed_pieces.push(test_rect);
+    sessionStorage.setItem('placementData', JSON.stringify(placement_data));
+    return { left: x, top: y };
+  };
+
+  const set_position = (piece, { top, left }) => {
+    piece.position.top = top;
+    piece.position.left = left;
+  };
+
+  const set_size = (piece, { height, width }) => {
+    piece.size.height = height;
+    piece.size.width = width;
+  };
+
+  const place_piece = piece => {
+    if (inactive.value) return return_piece(piece, false);
+
+    if (!validate_placement(piece)) return return_piece(piece, true, true);
 
     piece.x = active_cell.x;
     piece.y = active_cell.y;
 
-    if (already_placed) return;
-
-    const mover = remove(unused_pieces.value, p => p === piece);
-    used_pieces.value.push(...mover);
+    piece.placed = true;
   };
 
-  const return_piece = piece => {
-    piece.x = 0;
-    piece.y = 0;
+  const return_piece = (piece, reset_placement = true, bust_cache = false) => {
+    piece.placed = false;
+    piece.x = null;
+    piece.y = null;
 
-    const mover = remove(used_pieces.value, p => p === piece);
-    unused_pieces.value.push(...mover);
+    if (reset_placement) {
+      const { height, width } = piece.size;
+      piece.position = get_piece_position({ height, width }, bust_cache);
+    }
   };
 
   const clear_board = () => {
-    used_pieces.value = [];
-    unused_pieces.value = cloneDeep(pieces.value);
+    pieces.value.forEach((piece, i) => {
+      if (i === 0) return_piece(piece, true, true);
+      else return_piece(piece, true, false);
+    });
   };
 
-  const set_colors = () => {
-    const pieces = [
-      '--piece-c',
-      '--piece-i2',
-      '--piece-i3',
-      '--piece-i4',
-      '--piece-j',
-      '--piece-o',
-      '--piece-r',
-      '--piece-t',
-      '--piece-z',
+  const set_random_color = () => {
+    const colors = [
+      'var(--red)',
+      'var(--orange)',
+      'var(--yellow)',
+      'var(--green)',
+      'var(--teal)',
+      'var(--blue)',
+      'var(--indigo)',
+      'var(--violet)',
+      'var(--pink)',
     ];
 
-    const colors = generateDistinctColors(pieces.length);
+    const color_1 = colors[Math.floor(Math.random() * colors.length)];
+    colors.splice(colors.indexOf(color_1), 1);
+    const color_2 = colors[Math.floor(Math.random() * colors.length)];
+    colors.splice(colors.indexOf(color_2), 1);
+    const color_3 = colors[Math.floor(Math.random() * colors.length)];
+    colors.splice(colors.indexOf(color_3), 1);
+    const color_4 = colors[Math.floor(Math.random() * colors.length)];
+    colors.splice(colors.indexOf(color_4), 1);
+    const color_5 = colors[Math.floor(Math.random() * colors.length)];
+    colors.splice(colors.indexOf(color_5), 1);
+    const color_6 = colors[Math.floor(Math.random() * colors.length)];
+    colors.splice(colors.indexOf(color_6), 1);
+    const color_7 = colors[Math.floor(Math.random() * colors.length)];
+    colors.splice(colors.indexOf(color_7), 1);
+    const color_8 = colors[Math.floor(Math.random() * colors.length)];
+    colors.splice(colors.indexOf(color_8), 1);
+    const color_9 = colors[Math.floor(Math.random() * colors.length)];
+    colors.splice(colors.indexOf(color_9), 1);
 
-    pieces.forEach((piece, i) => {
-      document.documentElement.style.setProperty(piece, colors[i]);
-    });
+    document.documentElement.style.setProperty('--random-1', color_1);
+    document.documentElement.style.setProperty('--random-2', color_2);
+    document.documentElement.style.setProperty('--random-3', color_3);
+    document.documentElement.style.setProperty('--random-4', color_4);
+    document.documentElement.style.setProperty('--random-5', color_5);
+    document.documentElement.style.setProperty('--random-6', color_6);
+    document.documentElement.style.setProperty('--random-7', color_7);
+    document.documentElement.style.setProperty('--random-8', color_8);
+    document.documentElement.style.setProperty('--random-9', color_9);
   };
 
   const init = () => {
     clear_board();
-    // set_colors();
     roadblocks.value = [];
     inactive.value = true;
     active_cell.x = 1;
     active_cell.y = 1;
     create_roadblocks();
+    set_random_color();
   };
 
   return {
     pieces,
-    used_pieces,
-    unused_pieces,
     roadblocks,
     inactive,
     active_cell,
@@ -289,79 +438,34 @@ export const useBlocksStore = defineStore('blocks', () => {
     place_piece,
     return_piece,
     set_placing,
+    set_position,
+    set_size,
+    get_piece_position,
   };
 });
 
-function generateDistinctColors(count) {
-  const colors = [];
-  const hueStep = 360 / count; // Distribute hues evenly around the color wheel
+// function {top: 0, left: 0} {
+//   const random = (min, max) =>
+//     Math.floor(Math.random() * (max - min + 1)) + min;
+//   const x_delta = random(1, 2);
+//   const y_delta = random(1, 2);
 
-  for (let i = 0; i < count; i++) {
-    const hue = Math.floor(i * hueStep);
-    const saturation = 0.75 + Math.random() * 0.25; // 75-100%
-    const brightness = 0.75 + Math.random() * 0.25; // 75-100%
-    const rgb = HSVtoRGB(hue, saturation, brightness);
-    const hex = RGBtoHEX(rgb.r, rgb.g, rgb.b);
-    colors.push(hex);
-  }
+//   const position = {
+//     top: 0,
+//     left: 0,
+//   };
 
-  return colors;
-}
+//   if (x_delta === 1) {
+//     position.left = random(-800, -200);
+//   } else {
+//     position.left = random(window.innerWidth + 200, window.innerWidth + 800);
+//   }
 
-function HSVtoRGB(h, s, v) {
-  let r, g, b, i, f, p, q, t;
-  if (s === 0) {
-    r = g = b = v; // achromatic
-  } else {
-    h /= 60; // sector 0 to 5
-    i = Math.floor(h);
-    f = h - i; // factorial part of h
-    p = v * (1 - s);
-    q = v * (1 - s * f);
-    t = v * (1 - s * (1 - f));
-    switch (i) {
-      case 0:
-        r = v;
-        g = t;
-        b = p;
-        break;
-      case 1:
-        r = q;
-        g = v;
-        b = p;
-        break;
-      case 2:
-        r = p;
-        g = v;
-        b = t;
-        break;
-      case 3:
-        r = p;
-        g = q;
-        b = v;
-        break;
-      case 4:
-        r = t;
-        g = p;
-        b = v;
-        break;
-      default:
-        r = v;
-        g = p;
-        b = q;
-        break;
-    }
-  }
-  return {
-    r: Math.round(r * 255),
-    g: Math.round(g * 255),
-    b: Math.round(b * 255),
-  };
-}
+//   if (y_delta === 1) {
+//     position.top = random(-800, -200);
+//   } else {
+//     position.top = random(window.innerHeight + 200, window.innerHeight + 800);
+//   }
 
-function RGBtoHEX(r, g, b) {
-  return (
-    '#' +
-    ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()
-  );
-}
+//   return position;
+// }
