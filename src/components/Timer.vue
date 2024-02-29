@@ -1,5 +1,5 @@
 <template lang="pug">
-#timer.timer
+#timer.timer(data-avoid)
   span.timer__text
     span.timer__minutes {{ String(time.minutes).padStart(2, '0') }}
     span.timer__colon :

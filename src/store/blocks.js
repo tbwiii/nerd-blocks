@@ -1,5 +1,8 @@
 import { ref, reactive, computed, watch } from 'vue';
 import { defineStore } from 'pinia';
+import VirtualMap from './VirtualMap';
+
+const virtualMap = new VirtualMap(window.innerWidth, window.innerHeight, 0);
 
 export const useBlocksStore = defineStore('blocks', () => {
   const pieces = ref([
@@ -294,90 +297,7 @@ export const useBlocksStore = defineStore('blocks', () => {
     return !off_board && !roadblock_collision && !piece_collision;
   };
 
-  const get_piece_position = ({ height, width }, resetCache = false) => {
-    const screen_size = {
-      width: window.innerWidth,
-      height: window.innerHeight,
-    };
-
-    // Attempt to retrieve or initialize placement data
-    let placement_data = sessionStorage.getItem('placementData');
-    if (placement_data && !resetCache) {
-      placement_data = JSON.parse(placement_data);
-    } else {
-      sessionStorage.removeItem('placementData');
-      placement_data = { placed_pieces: [] };
-    }
-
-    let avoid_data = sessionStorage.getItem('avoidData');
-    if (avoid_data && !resetCache) {
-      avoid_data = JSON.parse(avoid_data);
-    } else {
-      sessionStorage.removeItem('avoidData');
-      avoid_data = null;
-    }
-
-    if (!avoid_data) {
-      const avoid_elements = [...document.querySelectorAll('[data-avoid]')].map(
-        elem => {
-          const rect = elem.getBoundingClientRect();
-          return {
-            left: rect.left,
-            top: rect.top,
-            right: rect.left + rect.width,
-            bottom: rect.top + rect.height,
-          };
-        }
-      );
-
-      avoid_data = {
-        screen_width: screen_size.width,
-        screen_height: screen_size.height,
-        avoid_elements,
-      };
-
-      sessionStorage.setItem('avoidData', JSON.stringify(avoid_data));
-    }
-
-    const does_overlap = (elem_rect, elements) =>
-      elements.some(
-        other_rect =>
-          !(
-            elem_rect.right < other_rect.left ||
-            elem_rect.left > other_rect.right ||
-            elem_rect.bottom < other_rect.top ||
-            elem_rect.top > other_rect.bottom
-          )
-      );
-
-    const max_attempts = 200;
-    let attempts = 0;
-    let x, y, test_rect;
-
-    while (attempts++ < max_attempts) {
-      x = Math.floor(Math.random() * (screen_size.width - width - 40)) + 20; // 20px buffer on left and right
-      y = Math.floor(Math.random() * (screen_size.height - height - 40)) + 20; // 20px buffer on top and bottom
-      test_rect = {
-        left: x,
-        top: y,
-        right: x + width,
-        bottom: y + height,
-      };
-
-      if (
-        !does_overlap(test_rect, avoid_data.avoid_elements) &&
-        !does_overlap(test_rect, placement_data.placed_pieces)
-      ) {
-        placement_data.placed_pieces.push(test_rect);
-        sessionStorage.setItem('placementData', JSON.stringify(placement_data));
-        return { left: x, top: y };
-      }
-    }
-
-    placement_data.placed_pieces.push(test_rect);
-    sessionStorage.setItem('placementData', JSON.stringify(placement_data));
-    return { left: x, top: y };
-  };
+  // const get_piece_position = size => virtualMap.findPlacementFor(size);
 
   const set_position = (piece, { top, left }) => {
     piece.position.top = top;
@@ -400,21 +320,21 @@ export const useBlocksStore = defineStore('blocks', () => {
     piece.placed = true;
   };
 
-  const return_piece = (piece, reset_placement = true, bust_cache = false) => {
+  const return_piece = (piece, reset_placement = true) => {
     piece.placed = false;
     piece.x = null;
     piece.y = null;
 
     if (reset_placement) {
       const { height, width } = piece.size;
-      piece.position = get_piece_position({ height, width }, bust_cache);
+      piece.position = virtualMap.findPlacementFor({ height, width });
     }
   };
 
   const clear_board = () => {
     pieces.value.forEach((piece, i) => {
-      if (i === 0) return_piece(piece, true, true);
-      else return_piece(piece, true, false);
+      if (i === 0) virtualMap.resetGrid();
+      return_piece(piece, true, false);
     });
   };
 
@@ -499,6 +419,6 @@ export const useBlocksStore = defineStore('blocks', () => {
     set_placing,
     set_position,
     set_size,
-    get_piece_position,
+    // get_piece_position,
   };
 });
