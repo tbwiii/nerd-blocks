@@ -31,15 +31,15 @@ const time = computed(() => store.current_time);
   }
 
   &__minutes {
-    color: var(--random-1);
+    color: var(--random-5);
   }
 
   &__seconds {
-    color: var(--random-2);
+    color: var(--random-6);
   }
 
   &__milliseconds {
-    color: var(--random-4);
+    color: var(--random-7);
   }
 
   &__colon {

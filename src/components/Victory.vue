@@ -128,7 +128,7 @@ onMounted(make_confetti);
     }
 
     &__milliseconds {
-      color: var(--random-4);
+      color: var(--random-3);
     }
 
     &__colon {
@@ -151,7 +151,7 @@ onMounted(make_confetti);
   }
 
   button {
-    --color: var(--random-2);
+    --color: var(--random-4);
     margin-top: 2rem;
     text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
 
