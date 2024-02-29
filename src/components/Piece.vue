@@ -65,6 +65,7 @@ const placed = computed(() => props.piece.placed && !placing.value);
 const animating = ref(false);
 
 const grab_start = (e) => {
+  if (!store.timing && !store.dismissed) store.start_timer();
   if (placing.value) return;
   placing.value = true;
   store.set_placing(true);

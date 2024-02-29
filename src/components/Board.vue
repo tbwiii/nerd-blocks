@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, watchEffect, defineEmits, onMounted } from 'vue'
+import { ref, computed, watch, watchEffect, defineEmits, onMounted } from 'vue';
 import { useBlocksStore } from '@/store/blocks';
 import { useMouseInElement } from '@vueuse/core';
 
@@ -130,6 +130,8 @@ watchEffect(() => {
 .board {
   display: flex;
   flex-direction: row-reverse;
+  align-self: center;
+  justify-self: center;
 
   &__hero {
     display: flex;

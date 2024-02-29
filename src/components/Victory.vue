@@ -1,8 +1,16 @@
 <template lang="pug">
 #victory
+  button.dismiss(@click="store.dismiss") dismiss
   .text(ref="victory")
     h1 Congratulations!
-    p You win!
+    h3 You win!
+    p You beat the game in:
+    .timer
+      span.timer__minutes {{ String(time.minutes).padStart(2, '0') }}
+      span.timer__colon :
+      span.timer__seconds {{ String(time.seconds).padStart(2, '0') }}
+      span.timer__colon :
+      span.timer__milliseconds {{ String(time.milliseconds).padStart(2, '0') }}
     button.btn(@click="store.init") Play again
     span.particle(
       v-for="confetti, i in confetti"
@@ -14,11 +22,14 @@
 
 <script setup>
 import { useBlocksStore } from '@/store/blocks';
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 
 const store = useBlocksStore();
+
 const victory = ref(null);
 const confetti = ref([]);
+
+const time = computed(() => store.current_time);
 
 const make_confetti = () => {
   const count = Math.ceil((victory.value.offsetWidth / 50) * 10);
@@ -56,7 +67,22 @@ onMounted(make_confetti);
   align-items: center;
   padding: 40px 0;
   text-align: center;
+  position: relative;
   grid-area: 1 / 1 / 2 / 2;
+}
+
+.dismiss {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 1rem;
+  font-size: 1.125rem;
+  cursor: pointer;
+  transition: 0.2s ease;
+
+  &:hover {
+    color: var(--random-1);
+  }
 }
 
 .text {
@@ -76,14 +102,56 @@ onMounted(make_confetti);
     line-height: 1;
   }
 
-  p {
+  h3 {
     line-height: 1;
     font-size: 3rem;
     margin: 0;
   }
 
+  p {
+    line-height: 1;
+    font-size: 1.5rem;
+    margin: 1rem 0 0;
+
+
+  }
+
+  .timer {
+    font-size: 1.3875rem;
+
+    &__minutes {
+      color: var(--random-1);
+    }
+
+    &__seconds {
+      color: var(--random-2);
+    }
+
+    &__milliseconds {
+      color: var(--random-4);
+    }
+
+    &__colon {
+      animation: blink 2s infinite ease-in-out;
+    }
+
+    @keyframes blink {
+      0% {
+        opacity: 0.5;
+      }
+
+      50.5% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.5;
+      }
+    }
+  }
+
   button {
-    --color: var(--white);
+    --color: var(--random-2);
     margin-top: 2rem;
     text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
 

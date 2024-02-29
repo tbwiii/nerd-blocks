@@ -1,4 +1,4 @@
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, watch } from 'vue';
 import { defineStore } from 'pinia';
 
 export const useBlocksStore = defineStore('blocks', () => {
@@ -136,12 +136,61 @@ export const useBlocksStore = defineStore('blocks', () => {
   const inactive = ref(true);
   const active_cell = reactive({ x: 1, y: 1 });
 
+  const current_time = reactive({
+    minutes: 0,
+    seconds: 0,
+    milliseconds: 0,
+  });
+
+  const timing = ref(false);
+
+  const start_timer = () => {
+    if (timing.value) return;
+    let start;
+    timing.value = true;
+
+    const timer = () => {
+      if (!timing.value) return;
+      if (start === undefined) {
+        start = Date.now();
+      }
+      const elapsed = Date.now() - start;
+
+      current_time.milliseconds = Math.floor((elapsed % 1000) / 10);
+      current_time.seconds = Math.floor((elapsed % 60000) / 1000);
+      current_time.minutes = Math.floor(elapsed / 60000);
+      requestAnimationFrame(timer);
+    };
+    requestAnimationFrame(timer);
+  };
+
+  const stop_timer = () => {
+    timing.value = false;
+  };
+
+  const reset_timer = () => {
+    timing.value = false;
+    current_time.minutes = 0;
+    current_time.seconds = 0;
+    current_time.milliseconds = 0;
+  };
+
   const set_placing = value => (placing.value = value);
 
   const success = computed(
     () =>
       pieces.value.filter(piece => piece.placed).length === pieces.value.length
   );
+
+  const dismissed = ref(false);
+
+  const dismiss = () => (dismissed.value = true);
+
+  watch(success, value => {
+    if (value) {
+      stop_timer();
+    }
+  });
 
   const create_roadblocks = () => {
     const dice = [
@@ -413,14 +462,18 @@ export const useBlocksStore = defineStore('blocks', () => {
   };
 
   const init = () => {
+    reset_timer();
     clear_board();
     roadblocks.value = [];
     inactive.value = true;
     active_cell.x = 1;
     active_cell.y = 1;
+    dismissed.value = false;
     create_roadblocks();
     set_random_color();
   };
+
+  set_random_color();
 
   return {
     pieces,
@@ -429,6 +482,12 @@ export const useBlocksStore = defineStore('blocks', () => {
     active_cell,
     success,
     placing,
+    current_time,
+    timing,
+    dismissed,
+    dismiss,
+    start_timer,
+    reset_timer,
     init,
     clear_board,
     create_roadblocks,
@@ -443,29 +502,3 @@ export const useBlocksStore = defineStore('blocks', () => {
     get_piece_position,
   };
 });
-
-// function {top: 0, left: 0} {
-//   const random = (min, max) =>
-//     Math.floor(Math.random() * (max - min + 1)) + min;
-//   const x_delta = random(1, 2);
-//   const y_delta = random(1, 2);
-
-//   const position = {
-//     top: 0,
-//     left: 0,
-//   };
-
-//   if (x_delta === 1) {
-//     position.left = random(-800, -200);
-//   } else {
-//     position.left = random(window.innerWidth + 200, window.innerWidth + 800);
-//   }
-
-//   if (y_delta === 1) {
-//     position.top = random(-800, -200);
-//   } else {
-//     position.top = random(window.innerHeight + 200, window.innerHeight + 800);
-//   }
-
-//   return position;
-// }
