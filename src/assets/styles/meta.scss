@@ -1,0 +1,89 @@
+$rootEM: 16px;
+$minWidth: 20rem;
+$maxWidth: 82rem;
+
+$breakpoints: (
+  xs: 0,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  sm_dn: 575px,
+  md_dn: 767px,
+  lg_dn: 991px,
+  xl_dn: 1199px,
+);
+
+@function strip-unit($value) {
+  @return math.div($value, ($value * 0 + 1));
+}
+
+@mixin mq($breakpoint) {
+  @if map-has-key($breakpoints, $breakpoint) {
+    $breakpoint-value: map-get($breakpoints, $breakpoint);
+    @media (min-width: $breakpoint-value) {
+      @content;
+    }
+  } @else {
+    @warn 'Invalid breakpoint: #{$breakpoint}.';
+  }
+}
+
+@mixin mqdn($breakpoint) {
+  @if map-has-key($breakpoints, $breakpoint) {
+    $breakpoint-value: map-get($breakpoints, $breakpoint);
+    @media (max-width: #{$breakpoint-value - 1}) {
+      @content;
+    }
+  } @else {
+    @warn 'Invalid breakpoint: #{$breakpoint}.';
+  }
+}
+
+@mixin fluid(
+  $prop: false,
+  $min,
+  $max,
+  $screenMin: $minWidth,
+  $screenMax: $maxWidth
+) {
+  @if not $prop {
+    @error 'Please define a fluid property.';
+  }
+
+  $u1: unit($min);
+  $u2: unit($max);
+  $u3: unit($screenMin);
+  $u4: unit($screenMax);
+
+  @if $u1 != $u2 {
+    @error 'Property units need to match.';
+  }
+  @if $u3 != $u4 {
+    @error 'Screen size units need to match.';
+  }
+  @if $u1 != rem and $u1 != px or $u3 != rem and $u3 != px {
+    @error 'Only rem or px units are allowed';
+  }
+
+  @if $u1 == px {
+    $min: math.div($min, $rootEM) * 1rem;
+    $max: math.div($max, $rootEM) * 1rem;
+  }
+  @if $u3 == px {
+    $screenMin: math.div($screenMin, $rootEM) * 1rem;
+    $screenMax: math.div($screenMax, $rootEM) * 1rem;
+  }
+  & {
+    #{$prop}: $min;
+    @media screen and (min-width: $screenMin) {
+      #{$prop}: calc(
+        #{$min} + #{strip-unit($max - $min)} *
+          ((100vw - #{$screenMin}) / #{strip-unit($screenMax - $screenMin)})
+      );
+    }
+    @media screen and (min-width: $screenMax) {
+      #{$prop}: $max;
+    }
+  }
+}
