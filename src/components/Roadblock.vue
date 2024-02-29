@@ -25,4 +25,15 @@ const props = defineProps({
   width: calc(var(--cell-size) * 0.65);
   background-color: var(--roadblock);
 }
+
+.roadblock-move {
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
+
+  @for $i from 1 through 7 {
+    &:nth-of-type(#{$i}) {
+      transition-delay: #{($i - 1) * 0.075}s;
+    }
+  }
+}
 </style>

@@ -2,24 +2,26 @@
 TransitionGroup.piece(
   @click.native="grab_start"
   :id="piece.id"
-  :class="{placing, placed}"
-  :tag="'div'"
+  :class="{placing, placed, animating}"
   :style="style",
-  ref="el")
+  :tag="'div'"
+  ref="piece_el")
   .piece__block(
     v-for="block, i in blocks"
     :key="i"
     :style="block"
+    ref="block_els"
   )
 </template>
 
 <script setup>
-import { ref, computed, defineEmits, onMounted } from 'vue';
+import { ref, computed, defineEmits, nextTick, onMounted } from 'vue';
 import { useBlocksStore } from '@/store/blocks';
 
 const store = useBlocksStore();
 const emit = defineEmits(['mounted']);
-const el = ref(null);
+const piece_el = ref(null);
+const block_els = ref(null);
 const props = defineProps({
   piece: Object
 });
@@ -76,11 +78,9 @@ const grab_start = (e) => {
   });
 
   window.addEventListener('mousemove', grab_move);
-  // window.addEventListener('touchmove', grab_move);
   window.addEventListener('keyup', triage_key);
   setTimeout(() => {
     window.addEventListener('click', grab_end);
-    // window.addEventListener('touchend', grab_end);
   }, 150);
 };
 
@@ -93,9 +93,7 @@ const grab_move = (e) => {
 
 const grab_end = (e) => {
   window.removeEventListener('mousemove', grab_move);
-  // window.removeEventListener('touchmove', grab_move);
   window.removeEventListener('click', grab_end);
-  // window.removeEventListener('touchend', grab_end);
   window.removeEventListener('keyup', triage_key);
 
   store.place_piece(props.piece);
@@ -104,29 +102,69 @@ const grab_end = (e) => {
 };
 
 const set_size = () => {
-  const height = el.value.$el.clientHeight;
-  const width = el.value.$el.clientWidth;
+  const height = piece_el.value.$el.clientHeight;
+  const width = piece_el.value.$el.clientWidth;
   store.set_size(props.piece, { height, width });
 };
 
-const rotate = (counterclockwise = false) => {
+const do_flip = async (invoke) => {
   if (animating.value) return;
   animating.value = true;
-  store.rotate(props.piece, counterclockwise);
-  setTimeout(() => {
-    set_size();
-    animating.value = false;
-  }, 250);
+
+  const data = new Map();
+
+  block_els.value.forEach((block, i) => {
+    const { x, y } = block.getBoundingClientRect();
+    const info = {
+      start: {x, y},
+      end: {}
+    };
+    data.set(block, info);
+  });
+
+  invoke();
+  await nextTick();
+
+  block_els.value.forEach((block, i) => {
+    const { x, y } = block.getBoundingClientRect();
+    const info = data.get(block);
+    info.end.x = x;
+    info.end.y = y;
+    data.set(block, info);
+  });
+
+  const animations = [];
+
+  block_els.value.forEach(block => {
+    const info = data.get(block);
+    const x = `${info.start.x - info.end.x}px`;
+    const y = `${info.start.y - info.end.y}px`;
+
+    const animation = block.animate([
+      { transform: `translate(${x}, ${y})` },
+      { transform: 'translate(0, 0)' }
+    ], {
+      duration: 300,
+      easing: 'ease',
+    });
+
+    animations.push(animation.finished);
+  });
+
+  await Promise.all(animations);
+  console.log('here')
+  set_size();
+  animating.value = false;
+}
+
+const rotate = (counterclockwise = false) => {
+  const invoke = () => store.rotate(props.piece, counterclockwise);
+  do_flip(invoke);
 };
 
 const reflect = (horizontal = false) => {
-  if (animating.value) return;
-  animating.value = true;
-  store.reflect(props.piece, horizontal);
-  setTimeout(() => {
-    set_size();
-    animating.value = false;
-  }, 250);
+  const invoke = () => store.reflect(props.piece, horizontal);
+  do_flip(invoke);
 };
 
 const triage_key = (e) => {
@@ -151,9 +189,10 @@ onMounted(() => {
   grid-auto-columns: var(--cell-size);
   grid-auto-rows: var(--cell-size);
   gap: 1px;
-  // transition: transform 5s ease;
   pointer-events: none;
   position: fixed;
+  top: 0;
+  left: 0;
   z-index: 100;
 
   &.placing {
@@ -170,6 +209,12 @@ onMounted(() => {
     --cell-size: 10vmin;
     z-index: 1;
     position: static;
+  }
+
+  &.animating {
+    .piece__block {
+      transition: none;
+    }
   }
 
   &__block {

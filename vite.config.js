@@ -8,7 +8,7 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: `@charset "UTF-8"; @use "sass:math";`,
+        additionalData: `@charset "UTF-8"; @use "sass:math"; @import "@/assets/styles/meta.scss";`,
       },
     },
   },

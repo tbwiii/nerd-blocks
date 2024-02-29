@@ -1,4 +1,3 @@
-let totalAttempts = 0;
 export default class VirtualMap {
   constructor(width, height, buffer = 10) {
     this.originalWidth = width;
@@ -8,7 +7,6 @@ export default class VirtualMap {
   }
 
   resetGrid() {
-    totalAttempts = 0;
     this.width = this.originalWidth - this.buffer * 2; // Account for buffer on both sides
     this.height = this.originalHeight - this.buffer * 2; // Account for buffer on top and bottom
     this.grid = this.initializeGrid();
@@ -50,7 +48,6 @@ export default class VirtualMap {
     let attempts = 0;
     const maxAttempts = 500;
     while (attempts < maxAttempts) {
-      totalAttempts++;
       attempts++;
       const x = Math.floor(Math.random() * (this.width - width));
       const y = Math.floor(Math.random() * (this.height - height));
@@ -61,7 +58,6 @@ export default class VirtualMap {
           right: x + width,
           bottom: y + height,
         });
-        console.log('Total attempts: ', totalAttempts);
         return { left: x + this.buffer, top: y + this.buffer };
       }
     }
