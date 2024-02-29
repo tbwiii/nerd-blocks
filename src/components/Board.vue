@@ -130,6 +130,7 @@ watchEffect(() => {
 .board {
   display: flex;
   flex-direction: row-reverse;
+  align-items: center;
   align-self: center;
   justify-self: center;
 
