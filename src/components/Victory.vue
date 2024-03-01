@@ -97,25 +97,25 @@ onMounted(make_confetti);
   }
 
   &__title {
-    font-size: 5rem;
+    @include fluid(font-size, 2rem, 5rem);
     margin: 0;
     line-height: 1;
   }
 
   &__subtitle {
+    @include fluid(font-size, 1.875rem, 3rem);
     line-height: 1;
-    font-size: 3rem;
     margin: 0;
   }
 
   &__info {
+    @include fluid(font-size, 1.125rem, 1.5rem);
     line-height: 1;
-    font-size: 1.5rem;
     margin: 1rem 0 0;
   }
 
   &__timer {
-    font-size: 1.3875rem;
+    @include fluid(font-size, 1.125rem, 1.3875rem);
 
     &-minutes {
       color: var(--random-1);

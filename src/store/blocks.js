@@ -2,7 +2,7 @@ import { ref, reactive, computed, watch } from 'vue';
 import { defineStore } from 'pinia';
 import VirtualMap from './VirtualMap';
 
-const virtualMap = new VirtualMap(window.innerWidth, window.innerHeight, 0);
+const virtualMap = new VirtualMap(0);
 
 export const useBlocksStore = defineStore('blocks', () => {
   const pieces = ref([
@@ -297,8 +297,6 @@ export const useBlocksStore = defineStore('blocks', () => {
     return !off_board && !roadblock_collision && !piece_collision;
   };
 
-  // const get_piece_position = size => virtualMap.findPlacementFor(size);
-
   const set_position = (piece, { top, left }) => {
     piece.position.top = top;
     piece.position.left = left;
@@ -381,6 +379,25 @@ export const useBlocksStore = defineStore('blocks', () => {
     document.documentElement.style.setProperty('--random-9', color_9);
   };
 
+  let lastWidth = window.innerWidth;
+
+  const onWidthResize = () => {
+    const currentWidth = window.innerWidth;
+    if (currentWidth !== lastWidth) {
+      virtualMap.resetGrid();
+      pieces.value.forEach(piece => {
+        if (!piece.placed) {
+          const { height, width } = piece.size;
+          piece.position = virtualMap.findPlacementFor({ height, width });
+        }
+      });
+      lastWidth = currentWidth;
+    }
+  };
+
+  const debouncedWidthResize = debounce(onWidthResize, 350);
+  window.addEventListener('resize', debouncedWidthResize);
+
   const init = () => {
     reset_timer();
     clear_board();
@@ -419,6 +436,17 @@ export const useBlocksStore = defineStore('blocks', () => {
     set_placing,
     set_position,
     set_size,
-    // get_piece_position,
   };
 });
+
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}

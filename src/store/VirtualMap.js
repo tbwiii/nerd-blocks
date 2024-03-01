@@ -1,14 +1,12 @@
 export default class VirtualMap {
-  constructor(width, height, buffer = 10) {
-    this.originalWidth = width;
-    this.originalHeight = height;
-    this.buffer = buffer;
+  constructor() {
+    this.buffer = 0;
     this.resetGrid(); // Initialize grid and avoid elements
   }
 
   resetGrid() {
-    this.width = this.originalWidth - this.buffer * 2; // Account for buffer on both sides
-    this.height = this.originalHeight - this.buffer * 2; // Account for buffer on top and bottom
+    this.width = window.innerWidth - this.buffer * 2; // Account for buffer on both sides
+    this.height = window.innerHeight - this.buffer * 2; // Account for buffer on top and bottom
     this.grid = this.initializeGrid();
     this.fetchAvoidElements();
   }

@@ -1,6 +1,9 @@
 <template lang="pug">
 TransitionGroup.piece(
   @click.native="grab_start"
+  v-touch:hold="isTouch ? grab_start : null"
+  v-touch:tap="isTouch ? triage_tap : null"
+  v-touch:swipe="isTouch ? triage_swipe : null"
   :id="piece.id"
   :class="{placing, placed, animating}"
   :style="style",
@@ -15,11 +18,14 @@ TransitionGroup.piece(
 </template>
 
 <script setup>
-import { ref, computed, defineEmits, nextTick, onMounted } from 'vue';
+import { ref, computed, nextTick, inject, onMounted } from 'vue';
 import { useBlocksStore } from '@/store/blocks';
 
 const store = useBlocksStore();
 const emit = defineEmits(['mounted']);
+
+const isTouch = inject('isTouch');
+
 const piece_el = ref(null);
 const block_els = ref(null);
 const props = defineProps({
@@ -67,33 +73,64 @@ const placed = computed(() => props.piece.placed && !placing.value);
 const animating = ref(false);
 
 const grab_start = (e) => {
+  let x, y;
+
+  if (isTouch.value) {
+    x = e.touches[0].clientX;
+    y = e.touches[0].clientY;
+  } else {
+    x = e.clientX;
+    y = e.clientY;
+  }
+
   if (!store.timing && !store.dismissed) store.start_timer();
+
   if (placing.value) return;
   placing.value = true;
-  store.set_placing(true);
 
+  store.set_placing(true);
   store.set_position(props.piece, {
-    top: e.clientY,
-    left: e.clientX
+    top: y,
+    left: x
   });
 
-  window.addEventListener('mousemove', grab_move);
-  window.addEventListener('keyup', triage_key);
-  setTimeout(() => {
-    window.addEventListener('click', grab_end);
-  }, 150);
+  if (isTouch.value) {
+    window.addEventListener('touchmove', grab_move);
+    setTimeout(() => {
+      window.addEventListener('touchend', grab_end);
+    }, 150);
+  } else {
+    window.addEventListener('mousemove', grab_move);
+    window.addEventListener('keyup', triage_key);
+    setTimeout(() => {
+      window.addEventListener('click', grab_end);
+    }, 150);
+  }
 };
 
 const grab_move = (e) => {
+  let x, y;
+  if (isTouch.value) {
+    x = e.touches[0].clientX;
+    y = e.touches[0].clientY;
+  } else {
+    x = e.clientX;
+    y = e.clientY;
+  }
+
   store.set_position(props.piece, {
-    top: e.clientY,
-    left: e.clientX
+    top: y,
+    left: x
   });
 };
 
-const grab_end = (e) => {
+const grab_end = () => {
+  window.removeEventListener('touchmove', grab_move);
   window.removeEventListener('mousemove', grab_move);
+
+  window.removeEventListener('touchend', grab_end);
   window.removeEventListener('click', grab_end);
+
   window.removeEventListener('keyup', triage_key);
 
   store.place_piece(props.piece);
@@ -116,7 +153,7 @@ const do_flip = async (invoke) => {
   block_els.value.forEach((block, i) => {
     const { x, y } = block.getBoundingClientRect();
     const info = {
-      start: {x, y},
+      start: { x, y },
       end: {}
     };
     data.set(block, info);
@@ -152,7 +189,6 @@ const do_flip = async (invoke) => {
   });
 
   await Promise.all(animations);
-  console.log('here')
   set_size();
   animating.value = false;
 }
@@ -168,12 +204,34 @@ const reflect = (horizontal = false) => {
 };
 
 const triage_key = (e) => {
+  if (placed.value) return;
   e.preventDefault();
   if (e.key === ' ') rotate();
   else if (e.key === 'Shift') rotate(true);
   else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') reflect(true);
   else if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') reflect();
   else if (e.key === 'Escape') grab_end();
+};
+
+const tap_timeout = ref(null);
+const triage_tap = () => {
+  if (placing.value || placed.value) return;
+  if (tap_timeout.value) {
+    clearTimeout(tap_timeout.value);
+    tap_timeout.value = null;
+    return rotate(true);
+  }
+
+  tap_timeout.value = setTimeout(() => {
+    tap_timeout.value = null;
+    rotate();
+  }, 300);
+};
+
+const triage_swipe = (dir) => {
+  if (placing.value || placed.value) return;
+  if (dir === 'left' || dir === 'right') return reflect();
+  else if (dir === 'top' || dir === 'bottom') return reflect(true);
 };
 
 onMounted(() => {
@@ -184,10 +242,10 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .piece {
-  --cell-size: 5vmin;
+  --reference: var(--cell-size-sm);
   display: grid;
-  grid-auto-columns: var(--cell-size);
-  grid-auto-rows: var(--cell-size);
+  grid-auto-columns: var(--reference);
+  grid-auto-rows: var(--reference);
   gap: 1px;
   pointer-events: none;
   position: fixed;
@@ -195,8 +253,9 @@ onMounted(() => {
   left: 0;
   z-index: 100;
 
-  &.placing {
-    --cell-size: 10vmin;
+  &.placing,
+  &.placed {
+    --reference: var(--cell-size);
   }
 
   .placing &:not(.placing) {
@@ -206,7 +265,6 @@ onMounted(() => {
   }
 
   &.placed {
-    --cell-size: 10vmin;
     z-index: 1;
     position: static;
   }
@@ -218,8 +276,8 @@ onMounted(() => {
   }
 
   &__block {
-    --gap: calc(var(--cell-size) * (3 / 40));
-    --size: calc(var(--cell-size) - (var(--gap) * 2));
+    --gap: calc(var(--reference) * (3 / 40));
+    --size: calc(var(--reference) - (var(--gap) * 2));
     display: flex;
     align-items: center;
     justify-content: center;
@@ -253,7 +311,7 @@ onMounted(() => {
 
     i {
       display: block;
-      font-size: calc(var(--cell-size) * 0.2);
+      font-size: calc(var(--reference) * 0.2);
       opacity: 0;
       visibility: hidden;
       transition: 0.2s ease;

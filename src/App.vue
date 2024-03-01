@@ -11,8 +11,9 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, watch } from 'vue';
+import { ref, computed, nextTick, watch, provide } from 'vue';
 import { useBlocksStore } from '@/store/blocks';
+import { useMediaQuery } from '@vueuse/core';
 
 import Loader from './components/Loader.vue';
 import Board from './components/Board.vue';
@@ -30,10 +31,26 @@ const complete_loading = async () => {
   setTimeout(() => loading.value = false, 500);
 };
 
+const isSm = useMediaQuery('(min-width: 576px)');
+const isMd = useMediaQuery('(min-width: 768px)');
+const isLg = useMediaQuery('(min-width: 992px)');
+const isXl = useMediaQuery('(min-width: 1200px)');
+const isTouch = useMediaQuery('(pointer: coarse)');
+
+provide('isSm', isSm);
+provide('isMd', isMd);
+provide('isLg', isLg);
+provide('isXl', isXl);
+provide('isTouch', isTouch);
+
 watch(placing, (value) => {
   if (value) document.documentElement.classList.add('placing');
   else document.documentElement.classList.remove('placing');
 });
+
+document.addEventListener('touchmove', function (e) {
+  if (isTouch.value) e.preventDefault();
+}, { passive: false });
 </script>
 
 <style scoped lang="scss">
@@ -42,12 +59,13 @@ watch(placing, (value) => {
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
   grid-area: 2 / 2 / 3 / 3;
-  width: 100%;
-  min-height: 100vh;
+  position: fixed;
+  inset: 0;
 }
 
 .inner {
-  --cell-size: 10vmin;
+  --cell-size: min(10vmin, 10vw);
+  --cell-size-sm: min(5vmin, 7vw);
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 1fr max-content;

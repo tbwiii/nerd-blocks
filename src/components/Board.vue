@@ -6,9 +6,9 @@
         span Nerd
         span Blocks
       .board__hero-controls
-        button.btn(@click="store.init") New Game
-        button.btn(@click="store.clear_board" :disabled="!can_clear") Clear Board
-    small.board__hero-directions(data-avoid)
+        button.btn.board__hero-btn(@click="store.init") New Game
+        button.btn.board__hero-btn(@click="store.clear_board" :disabled="!can_clear") Clear Board
+    small.board__hero-directions(v-if="isLg" data-avoid)
       strong Directions
       span Click to grab a piece
       span Space to rotate clockwise
@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, watchEffect, defineEmits, onMounted } from 'vue';
+import { ref, computed, watch, watchEffect, onMounted, inject } from 'vue';
 import { useBlocksStore } from '@/store/blocks';
 import { useMouseInElement } from '@vueuse/core';
 
@@ -60,6 +60,8 @@ const mounted = ref(false);
 
 const child_mounted_count = ref(0);
 const pieces = computed(() => store.pieces);
+
+const isLg = inject('isLg');
 
 const can_clear = computed(() => store.pieces.some((piece) => piece.placed));
 
@@ -116,10 +118,14 @@ watchEffect(() => {
 <style lang="scss" scoped>
 .board {
   display: flex;
-  flex-direction: row-reverse;
-  align-items: center;
+  flex-direction: column;
   align-self: center;
   justify-self: center;
+    align-items: center;
+
+  @include mq(lg) {
+    flex-direction: row-reverse;
+  }
 
   &__hero {
     display: flex;
@@ -128,17 +134,24 @@ watchEffect(() => {
     grid-area: 1 / 3 / 3 / 4;
 
     &-inner {
+      @include fluid(padding, 1.25rem, 2rem);
+      @include fluid(gap, 1.25rem, 2rem);
       display: flex;
-      flex-direction: column;
-      justify-content: center;
+      align-items: center;
       gap: 2rem;
       padding: 2rem;
+
+      @include mq(lg) {
+        flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
+      }
     }
 
     &-title {
+      @include fluid(font-size, 2.25rem, 4rem);
       display: flex;
       flex-direction: column;
-      font-size: 4rem;
       font-weight: 700;
       margin: 0;
       line-height: 1;
@@ -149,15 +162,26 @@ watchEffect(() => {
         color: var(--random-1);
 
         &:last-child {
-        color: var(--random-2);
+          color: var(--random-2);
         }
       }
     }
 
     &-controls {
+      @include fluid(gap, 0.875rem, 1.5rem);
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+
+      @include mqdn(lg) {
+        flex: 1 1 auto;
+      }
+    }
+
+    &-btn {
+      @include fluid(font-size, 0.875rem, 1.125rem);
+      @include fluid(padding-top, 1.125rem, 1.375rem);
+      @include fluid(padding-inline, 0.5rem, 0.75rem);
+      @include fluid(padding-bottom, 0.875rem, 1rem);
     }
 
     &-directions {
@@ -170,6 +194,7 @@ watchEffect(() => {
       strong {
         font-size: 1em;
       }
+
       span,
       em {
         font-size: 0.875em;
@@ -184,10 +209,10 @@ watchEffect(() => {
   }
 
   &__main {
+    @include fluid(padding, 1.25rem, 2rem);
     display: grid;
     grid-template-columns: auto auto;
     grid-template-rows: auto auto;
-    padding: 2rem;
   }
 
   &__ranks,
@@ -202,8 +227,8 @@ watchEffect(() => {
     grid-area: 2 / 1 / 3 / 2;
 
     .board__label {
+      @include fluid(padding-inline-end, 0.55rem, 0.75rem);
       justify-content: flex-end;
-      padding-inline-end: 0.75rem;
     }
   }
 
@@ -213,17 +238,17 @@ watchEffect(() => {
     grid-area: 1 / 2 / 2 / 3;
 
     .board__label {
+      @include fluid(padding-block-end, 0.55rem, 0.75rem);
       align-items: flex-end;
-      padding-block-end: 0.75rem;
     }
   }
 
   &__label {
+    @include fluid(font-size, 1.25rem, 2rem);
     display: flex;
     justify-content: center;
     align-items: center;
     text-transform: uppercase;
-    font-size: 2rem;
     font-weight: bold;
     line-height: 0.8;
   }
