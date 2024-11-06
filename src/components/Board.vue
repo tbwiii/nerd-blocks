@@ -58,6 +58,14 @@ const emit = defineEmits(['mounted']);
 
 const mounted = ref(false);
 
+const shuffle_blocks = () => {
+  setInterval(() => {
+    if (!store.current_time.milliseconds) {
+      store.create_roadblocks();
+    }
+  }, 3000);
+};
+
 const child_mounted_count = ref(0);
 const pieces = computed(() => store.pieces);
 
@@ -105,7 +113,10 @@ watch(isOutside, (value) => {
   }
 });
 
-onMounted(() => mounted.value = true);
+onMounted(() => {
+  mounted.value = true
+  shuffle_blocks();
+});
 
 watchEffect(() => {
   if (child_mounted_count.value === pieces.value.length && mounted.value) {
